@@ -1,0 +1,31 @@
+# Core LangChain
+langchain
+langchain-community
+
+# PDF loading
+pdfplumber
+pypdf
+PyMuPDF
+
+# Azure OpenAI & Cognitive Services
+openai
+azure-core
+azure-search-documents
+azure-identity
+
+# Pinecone for hybrid vector search
+pinecone-client
+
+# Text processing
+tiktoken
+
+# Read an Excel file as a dataframe
+pandas 
+openpyxl
+
+# Web API (optional for serving your chatbot)
+fastapi
+uvicorn
+
+# Optional (local vector storage for testing)
+faiss-cpu
