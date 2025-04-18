@@ -29,3 +29,11 @@ uvicorn
 
 # Optional (local vector storage for testing)
 faiss-cpu
+
+# Database and ORM libraries
+asyncpg
+sqlalchemy
+databases
+psycopg2-binary
+alembic
+python-multipart

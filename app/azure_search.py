@@ -86,12 +86,12 @@ def search_similar_content(query_vector, top_k=10):
         select=["id", "content"],
         top=top_k 
     )
-    print(f"search_similar_content Results: {results}")  
+    # print(f"search_similar_content Results: {results}")  
     
     top_chunks = []
     for result in results:
-        print(f"🔹 ID: {result['id']}")
-        print(f"📝 Content Preview: {result['content'][:150]}...\n")
+        # print(f"🔹 ID: {result['id']}")
+        # print(f"📝 Content Preview: {result['content'][:150]}...\n")
         top_chunks.append(result["content"])
 
     return top_chunks

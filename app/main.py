@@ -3,12 +3,19 @@ from app.models import ChatRequest
 from app.embedding import process_pdf
 from app.chat import chat_with_gpt
 from app.bulk_embed import process_bulk_embedding
+from app.routers import product
+from app.db.database import Base, engine
+
+# Create DB tables
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Flooring AI Chatbot API",
     description="This API allows users to embed flooring brochures and chat with a GPT-based assistant to get flooring recommendations.",
     version="1.0.0"
 )
+
+app.include_router(product.router)
 
 @app.get("/", tags=["Health"])
 def root():
