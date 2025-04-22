@@ -5,14 +5,60 @@
   <title>AI Chatbot</title>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
-    #chat-container { max-width: 600px; margin: auto; background: white; border-radius: 8px; box-shadow: 0 0 10px #ccc; padding: 20px; }
-    .message { padding: 8px 12px; margin: 10px 0; border-radius: 5px; }
-    .user { background: #e0f7fa; text-align: right; }
-    .bot { background: #e8f5e9; text-align: left; }
-    #input-area { display: flex; margin-top: 10px; }
-    #user-input { flex: 1; padding: 10px; font-size: 16px; }
-    #send-btn { padding: 10px; font-size: 16px; cursor: pointer; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+
+    #chat-container {
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 0 10px #ccc;
+      padding: 20px;
+    }
+
+    .message {
+      padding: 8px 12px;
+      margin: 10px 0;
+      border-radius: 5px;
+      white-space: pre-wrap;
+    }
+
+    .user {
+      background: #e0f7fa;
+      text-align: right;
+    }
+
+    .bot {
+      background: #e8f5e9;
+      text-align: left;
+    }
+
+    #input-area {
+      display: flex;
+      margin-top: 10px;
+    }
+
+    #user-input {
+      flex: 1;
+      padding: 10px;
+      font-size: 16px;
+    }
+
+    #send-btn {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    #send-btn:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 <body>
@@ -29,31 +75,64 @@
     const input = document.getElementById('user-input');
     const sendBtn = document.getElementById('send-btn');
 
+    let isLoading = false;
+    let loadingMsgElement = null;
+
     function appendMessage(text, sender) {
       const msg = document.createElement('div');
       msg.className = `message ${sender}`;
-    //   msg.textContent = text;
       msg.innerHTML = marked.parse(text);
       chatBox.appendChild(msg);
       chatBox.scrollTop = chatBox.scrollHeight;
     }
 
+    function showLoading() {
+      loadingMsgElement = document.createElement('div');
+      loadingMsgElement.className = 'message bot';
+      loadingMsgElement.textContent = '...bot is typing';
+      chatBox.appendChild(loadingMsgElement);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function hideLoading() {
+      if (loadingMsgElement) {
+        chatBox.removeChild(loadingMsgElement);
+        loadingMsgElement = null;
+      }
+    }
+
     async function sendMessage() {
       const userText = input.value.trim();
-      if (!userText) return;
+      if (!userText || isLoading) return;
+
+      isLoading = true;
+      input.disabled = true;
+      sendBtn.disabled = true;
 
       appendMessage(userText, 'user');
       input.value = '';
+      showLoading();
 
-      const response = await fetch('/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userText })
-      });
+      try {
+        const response = await fetch('/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: userText })
+        });
 
-      const data = await response.json();
-      console.log("data", data)
-      appendMessage(data.reply, 'bot');
+        const data = await response.json();
+        hideLoading();
+        appendMessage(data.reply, 'bot');
+      } catch (err) {
+        hideLoading();
+        appendMessage("⚠️ Error: Unable to get response", 'bot');
+        console.error(err);
+      }
+
+      isLoading = false;
+      input.disabled = false;
+      sendBtn.disabled = false;
+      input.focus();
     }
 
     sendBtn.onclick = sendMessage;
