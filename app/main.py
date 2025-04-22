@@ -51,8 +51,9 @@ async def websocket_endpoint(websocket: WebSocket):
     while True:
         try:
             data = await websocket.receive_text()
-            print(f"[WebSocket] Received: {data}")
+            # print(f"[WebSocket] Received: {data}")
             reply = chat_with_gpt(data)
+            print(f'Response ==> {reply}')
             await websocket.send_text(reply)
         except Exception as e:
             print(f"[WebSocket] Error: {e}")

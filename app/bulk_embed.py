@@ -39,7 +39,7 @@ def process_bulk_embedding(excel_url: str):
         # start, limit = 0, 5
         # distinct_brochures = (df['CollectionBrochure'].dropna().drop_duplicates().sort_values().tolist())[start:start+limit]
 
-        print(f"📘 Found {len(distinct_brochures)} unique brochure URLs")
+        print(f"Found {len(distinct_brochures)} unique brochure URLs")
 
         results = []
 
