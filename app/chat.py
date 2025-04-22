@@ -11,13 +11,15 @@ from azure.search.documents.models import (
 )
 from app.db.database import get_db  # session management
 from app.db.product_metadata import search_product_metadata
+from dotenv import load_dotenv
+load_dotenv()
 
 EMBEDDING_DIM = 3072
 
 client = AzureOpenAI(
     api_version=os.getenv("AZURE_OPENAI_EMBEDDING_API_VERSION"),
     azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-    api_key=os.getenv("AZURE_OPENAI_KEY")
+    api_key=os.getenv("AZURE_OPENAI_API_KEY")
 )
 
 # Example function to generate document embedding

@@ -4,13 +4,15 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from openai import AzureOpenAI
 import numpy as np
 from app.azure_search import create_vector_index, upload_documents_to_search
+from dotenv import load_dotenv
+load_dotenv()
 
 EMBEDDING_DIM = 3072 # For text-embedding-3-large
 
 client = AzureOpenAI(
     api_version=os.getenv("AZURE_OPENAI_EMBEDDING_API_VERSION"),
     azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-    api_key=os.getenv("AZURE_OPENAI_KEY")
+    api_key=os.getenv("AZURE_OPENAI_API_KEY")
 )
 
 def process_pdf(pdf_path: str):

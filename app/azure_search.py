@@ -14,6 +14,8 @@ from azure.search.documents.indexes.models import (
     VectorSearchProfile,
     VectorSearchAlgorithmConfiguration
 )
+from dotenv import load_dotenv
+load_dotenv()
 
 AZURE_SEARCH_ENDPOINT = os.getenv("AZURE_SEARCH_ENDPOINT")
 AZURE_SEARCH_KEY = os.getenv("AZURE_SEARCH_KEY")

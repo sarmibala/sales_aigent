@@ -1,4 +1,8 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+import os
+
 from app.models import ChatRequest
 from app.embedding import process_pdf
 from app.chat import chat_with_gpt
@@ -23,10 +27,6 @@ def root():
 
 @app.post("/embed/", tags=["Embeddings"], summary="Embed PDF brochure")
 def embed_pdf(file_path: str):
-    """
-    Process a PDF brochure file, generate embeddings using Azure OpenAI,
-    and store them in Azure Cognitive Search for semantic search.
-    """
     return process_pdf(file_path)
 
 @app.post("/bulk-embed/", tags=["Embeddings"], summary="Embed multiple brochures from Excel")
@@ -35,10 +35,12 @@ def bulk_embed(excel_url: str):
 
 @app.post("/chat/", tags=["Chat"], summary="Ask a flooring-related question")
 async def chat(request: ChatRequest):
-    """
-    Ask a flooring-related question. The bot will respond using context retrieved
-    from Azure Cognitive Search powered by vector embeddings.
-    """
     user_message = request.message
     response = chat_with_gpt(user_message)
     return {"reply": response}
+
+@app.get("/chat-ui/", response_class=HTMLResponse, tags=["UI"])
+def chat_ui():
+    file_path = os.path.join(os.path.dirname(__file__), "chat.html")
+    with open(file_path, "r", encoding="utf-8") as f:
+        return f.read()

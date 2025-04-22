@@ -3,6 +3,8 @@ import requests
 import os
 import urllib.parse
 from io import BytesIO
+from dotenv import load_dotenv
+load_dotenv()
 
 def get_excel_download_url(google_sheet_url: str) -> str:
     try:
