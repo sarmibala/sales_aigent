@@ -9,33 +9,76 @@
       font-family: Arial, sans-serif;
       margin: 0;
       padding: 20px;
-      background: #f5f5f5;
+      min-height: 100vh;
+      background: linear-gradient(to bottom, #d2e3ec, #f0f0f0);
+      background-attachment: fixed;
     }
 
     #chat-container {
-      max-width: 600px;
+      max-width: 700px;
       margin: auto;
-      background: white;
+      background-color: #f0f0f0;
       border-radius: 8px;
-      box-shadow: 0 0 10px #ccc;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
       padding: 20px;
     }
 
     .message {
-      padding: 8px 12px;
+      display: flex;
       margin: 10px 0;
-      border-radius: 5px;
-      white-space: pre-wrap;
+      width: 100%;
+      box-sizing: border-box;
     }
 
-    .user {
-      background: #e0f7fa;
+    .message.user {
+      justify-content: flex-end;
+    }
+
+    .message.bot {
+      justify-content: flex-start;
+    }
+
+    .bubble {
+      background: #ffffff;
+      padding: 10px 12px;
+      border-radius: 10px;
+      max-width: 75%;
+      position: relative;
+    }
+
+    .message.bot .bubble {
+      background: #dcf8c6;
+      color: #000000 ;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .message.bot .content {
+      color: #000000 ;
+    }
+
+    .message.bot .timestamp {
+      color: #000000 ;
+    }
+
+    .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+
+    .content {
+      flex: 1;
+    }
+
+    .timestamp {
+      font-size: 0.75em;
+      color: gray;
       text-align: right;
-    }
-
-    .bot {
-      background: #e8f5e9;
-      text-align: left;
+      margin-top: 6px;
     }
 
     #input-area {
@@ -74,66 +117,92 @@
     const chatBox = document.getElementById('chat-box');
     const input = document.getElementById('user-input');
     const sendBtn = document.getElementById('send-btn');
+    const socket = new WebSocket(`ws://${location.host}/ws/chat/`);
 
-    let isLoading = false;
-    let loadingMsgElement = null;
+    let isBotTyping = false;
+    let typingIndicator = null;
+
+    function formatTime() {
+      const now = new Date();
+      return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
 
     function appendMessage(text, sender) {
       const msg = document.createElement('div');
       msg.className = `message ${sender}`;
-      msg.innerHTML = marked.parse(text);
+
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+
+      const content = document.createElement('div');
+      content.className = 'content';
+      content.innerHTML = marked.parse(text);
+
+      const timestamp = document.createElement('div');
+      timestamp.className = 'timestamp';
+      timestamp.textContent = formatTime();
+
+      content.appendChild(timestamp);
+
+      if (sender === 'bot') {
+        const avatar = document.createElement('img');
+        avatar.className = 'avatar';
+        avatar.src = 'https://cdn-icons-png.flaticon.com/512/4712/4712109.png';
+
+        bubble.appendChild(avatar);
+        bubble.appendChild(content);
+      } else {
+        bubble.appendChild(content);
+      }
+
+      msg.appendChild(bubble);
       chatBox.appendChild(msg);
       chatBox.scrollTop = chatBox.scrollHeight;
     }
 
-    function showLoading() {
-      loadingMsgElement = document.createElement('div');
-      loadingMsgElement.className = 'message bot';
-      loadingMsgElement.textContent = '...bot is typing';
-      chatBox.appendChild(loadingMsgElement);
+
+    function showTyping() {
+      typingIndicator = document.createElement('div');
+      typingIndicator.className = 'message bot';
+      typingIndicator.innerHTML = `
+        <img class="avatar" src="https://cdn-icons-png.flaticon.com/512/4712/4712109.png">
+        <div class="content"><em>Bot is typing...</em></div>
+      `;
+      chatBox.appendChild(typingIndicator);
       chatBox.scrollTop = chatBox.scrollHeight;
     }
 
-    function hideLoading() {
-      if (loadingMsgElement) {
-        chatBox.removeChild(loadingMsgElement);
-        loadingMsgElement = null;
+    function hideTyping() {
+      if (typingIndicator) {
+        chatBox.removeChild(typingIndicator);
+        typingIndicator = null;
       }
     }
 
-    async function sendMessage() {
-      const userText = input.value.trim();
-      if (!userText || isLoading) return;
+    function disableInput(disabled) {
+      input.disabled = disabled;
+      sendBtn.disabled = disabled;
+    }
 
-      isLoading = true;
-      input.disabled = true;
-      sendBtn.disabled = true;
+    function sendMessage() {
+      const userText = input.value.trim();
+      if (!userText || isBotTyping) return;
 
       appendMessage(userText, 'user');
+      socket.send(userText);
       input.value = '';
-      showLoading();
-
-      try {
-        const response = await fetch('/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: userText })
-        });
-
-        const data = await response.json();
-        hideLoading();
-        appendMessage(data.reply, 'bot');
-      } catch (err) {
-        hideLoading();
-        appendMessage("⚠️ Error: Unable to get response", 'bot');
-        console.error(err);
-      }
-
-      isLoading = false;
-      input.disabled = false;
-      sendBtn.disabled = false;
-      input.focus();
+      disableInput(true);
+      showTyping();
+      isBotTyping = true;
     }
+
+    socket.onmessage = (event) => {
+      hideTyping();
+      console.log('event.data', event.data)
+      appendMessage(event.data, 'bot');
+      disableInput(false);
+      isBotTyping = false;
+    };
 
     sendBtn.onclick = sendMessage;
     input.addEventListener('keypress', (e) => {

@@ -25,7 +25,8 @@ openpyxl
 
 # Web API (optional for serving your chatbot)
 fastapi
-uvicorn
+uvicorn[standard]
+# uvicorn
 
 # Optional (local vector storage for testing)
 faiss-cpu

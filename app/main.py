@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, WebSocket
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 import os
@@ -44,3 +44,16 @@ def chat_ui():
     file_path = os.path.join(os.path.dirname(__file__), "chat.html")
     with open(file_path, "r", encoding="utf-8") as f:
         return f.read()
+
+@app.websocket("/ws/chat/")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    while True:
+        try:
+            data = await websocket.receive_text()
+            print(f"[WebSocket] Received: {data}")
+            reply = chat_with_gpt(data)
+            await websocket.send_text(reply)
+        except Exception as e:
+            print(f"[WebSocket] Error: {e}")
+            break

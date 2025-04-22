@@ -125,17 +125,14 @@ def chat_with_gpt(user_input: str):
     chat_response = client.chat.completions.create(
         model=os.getenv("AZURE_OPENAI_GPT_DEPLOYMENT_NAME"),
         messages=[
-            {"role": "system", "content": "You are a flooring advisor."},
+            {"role": "system", "content": (
+                "You are a helpful flooring advisor. "
+                "When responding, format your answer using Markdown. "
+                "Use **bold**, *italics*, bullet points, numbered lists, and section headings (###) where appropriate. "
+                "Your output will be displayed in a web UI that supports Markdown rendering via marked.js."
+            )},
             {"role": "user", "content": f"Use this context: {full_context}\n\nQuestion: {user_input}"}
         ],
-        # messages=[
-        #     {"role": "system", "content": (
-        #         "You are a flooring advisor. If the user asks for suggestions, respond only with product names, models, or descriptions "
-        #         "extracted from the brochures. Prioritize concise product listings with supporting descriptions from context. "
-        #         "Avoid generic product advice unless context is insufficient."
-        #     )},
-        #     {"role": "user", "content": f"Use this context: {full_context}\n\nQuestion: {user_input}"}
-        # ],
         max_tokens=1024
     )
 
