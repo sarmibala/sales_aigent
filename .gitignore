@@ -175,3 +175,12 @@ cython_debug/
 
 # Ignore some static files
 /data/test1.xlsx
+/data/Mohawk SKU Data.xlsx
+distinct_brochures.csv
+distinct_brochures.xlsx
+
+# Ignore test code python files
+test1.py
+test2.py
+test3.py
+test4.py

@@ -2,6 +2,7 @@ from fastapi import FastAPI, WebSocket
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 import os
+import httpx
 
 from app.models import ChatRequest
 from app.embedding import process_pdf
@@ -58,3 +59,31 @@ async def websocket_endpoint(websocket: WebSocket):
         except Exception as e:
             print(f"[WebSocket] Error: {e}")
             break
+
+@app.get("/fetch-products")
+async def fetch_products():
+    timeout = httpx.Timeout(30.0)
+    PRODUCTS_CREST_API_BASE_URL = os.getenv("PRODUCTS_CREST_API_BASE_URL")
+
+    PRODUCTS_CREST_API_BASE_URL = f'{PRODUCTS_CREST_API_BASE_URL}api/GetProductsByBrandCodeSite/MohawkGroup/SoftSurface'
+
+    async with httpx.AsyncClient(timeout=timeout) as client:
+        response = await client.get(PRODUCTS_CREST_API_BASE_URL)
+        response.raise_for_status()
+        data = response.json()
+
+    # Extract unique collection names
+    collection_names = set()
+    for item in data:
+        collection_names.add(item.get('collectionName'))
+
+    # Convert set to sorted list for display
+    unique_collections = sorted(collection_names)
+
+    sorted_collections = sorted(unique_collections)
+
+    print(f"Found {len(sorted_collections)} unique Collection names")
+    print(f"collection_names_from_excel_product_data ==> {sorted_collections}")
+
+    # Return as API response
+    return {"unique_collections": sorted_collections}

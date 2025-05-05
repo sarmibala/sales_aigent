@@ -33,7 +33,7 @@ def generate_embeddings(text, model):
 def extract_structured_filters(user_query: str) -> Dict[str, str]:
     system_prompt = (
         "Extract key flooring product filters from the user query. "
-        "Return them as a JSON object with possible keys: collection_name, style_name, marketing_color_name, construction, backing_description. "
+        "Return them as a JSON object with possible keys: collection_name, style_name, color_code, marketing_color_name, construction, backing_description. "
         "Do not wrap the JSON inside markdown code block."
     )
 
