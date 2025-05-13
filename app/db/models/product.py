@@ -1,3 +1,5 @@
+# app/db/models/product.py
+
 from sqlalchemy import Column, Integer, String, Float, Text
 from app.db.database import Base
 

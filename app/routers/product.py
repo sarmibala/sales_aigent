@@ -1,3 +1,5 @@
+# app/routers/product.py
+
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from sqlalchemy.orm import Session
 from app.schemas.product import ProductSchema

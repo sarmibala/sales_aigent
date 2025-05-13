@@ -1,9 +1,12 @@
+# app/bulk_embed.py
+
 import pandas as pd
 import requests
 import os
 import urllib.parse
 from io import BytesIO
 from dotenv import load_dotenv
+from app.embedding import process_pdf
 load_dotenv()
 
 def get_excel_download_url(google_sheet_url: str) -> str:
@@ -19,7 +22,7 @@ def get_excel_download_url(google_sheet_url: str) -> str:
         raise ValueError(f"Error parsing URL: {e}")
 
 
-def process_bulk_embedding(excel_url: str):
+def process_bulk_embedding(excel_url: str, index_name: str):
     try:
         PYTHON_APP_BASE_URL = os.getenv("PYTHON_APP_BASE_URL")
         download_url = get_excel_download_url(excel_url)
@@ -45,17 +48,10 @@ def process_bulk_embedding(excel_url: str):
 
         for url in distinct_brochures:
             try:
-                api_endpoint = urllib.parse.urljoin(PYTHON_APP_BASE_URL, "embed/")
-                response = requests.post(api_endpoint, params={"file_path": url})
-                results.append({
-                    "url": url,
-                    "status": response.status_code,
-                    "response": response.json()
-                })
+                result = process_pdf(url, index_name)
+                results.append({"url": url, "result": result})
             except Exception as e:
-                results.append({
-                    "url": url,
-                    "error": str(e)
+                results.append({"url": url, "error": str(e)
                 })
 
         return {"processed": len(results), "results": results}

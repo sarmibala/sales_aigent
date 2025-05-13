@@ -1,9 +1,11 @@
+# app/embedding.py
+
 import os
 from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from openai import AzureOpenAI
 import numpy as np
-from app.azure_search import create_vector_index, upload_documents_to_search
+from app.azure_search import upload_documents_to_search
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -15,7 +17,7 @@ client = AzureOpenAI(
     api_key=os.getenv("AZURE_OPENAI_API_KEY")
 )
 
-def process_pdf(pdf_path: str):
+def process_pdf(pdf_path: str, index_name: str):
     try:
         pdf_name = os.path.basename(pdf_path).replace(".pdf", "")
         loader = PyPDFLoader(pdf_path)
@@ -47,7 +49,7 @@ def process_pdf(pdf_path: str):
             return {"status": "error", "message": "No valid embeddings were generated."}
 
         # create_vector_index(dim=EMBEDDING_DIM)
-        upload_documents_to_search(pdf_name, texts, vectors, clean_metadata)
+        upload_documents_to_search(index_name, pdf_name, texts, vectors, clean_metadata)
 
         return {"status": "embedded", "chunks": len(vectors)}
 

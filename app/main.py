@@ -1,13 +1,18 @@
+# app/main.py
+
 from fastapi import FastAPI, WebSocket
 from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse
 import os
 import httpx
+import json
+import traceback
 
-from app.models import ChatRequest
+from app.models import EmbedRequest, BulkEmbedRequest, ChatRequest
 from app.embedding import process_pdf
 from app.chat import chat_with_gpt
 from app.bulk_embed import process_bulk_embedding
+from app.fetch_and_cache_products_from_crest_api import fetch_and_cache_products_from_crest_api
 from app.routers import product
 from app.db.database import Base, engine
 
@@ -22,23 +27,29 @@ app = FastAPI(
 
 app.include_router(product.router)
 
-@app.get("/", tags=["Health"])
+@app.get("/", tags=["Health"], summary="Health check")
 def root():
     return {"status": "Flooring AI backend is running"}
 
 @app.post("/embed/", tags=["Embeddings"], summary="Embed PDF brochure")
-def embed_pdf(file_path: str):
-    return process_pdf(file_path)
+def embed_pdf(request: EmbedRequest):
+    return process_pdf(request.file_path, request.index_name.value)
 
 @app.post("/bulk-embed/", tags=["Embeddings"], summary="Embed multiple brochures from Excel")
-def bulk_embed(excel_url: str):
-    return process_bulk_embedding(excel_url)
+def bulk_embed(request: BulkEmbedRequest):
+    return process_bulk_embedding(request.excel_url, request.index_name.value)
 
 @app.post("/chat/", tags=["Chat"], summary="Ask a flooring-related question")
 async def chat(request: ChatRequest):
-    user_message = request.message
-    response = chat_with_gpt(user_message)
-    return {"reply": response}
+    try:
+        response = chat_with_gpt(request.message, request.index_name.value)
+        return {"reply": response}
+    except Exception as e:
+        print(traceback.format_exc())
+        return JSONResponse(
+            status_code=500,
+            content={"status": "error", "message": str(e)}
+        )
 
 @app.get("/chat-ui/", response_class=HTMLResponse, tags=["UI"])
 def chat_ui():
@@ -52,12 +63,22 @@ async def websocket_endpoint(websocket: WebSocket):
     while True:
         try:
             data = await websocket.receive_text()
-            # print(f"[WebSocket] Received: {data}")
-            reply = chat_with_gpt(data)
-            print(f'Response ==> {reply}')
+            payload = json.loads(data)
+
+            # Extract message and index_name from the JSON payload
+            user_message = payload.get("message")
+            index_name = payload.get("index_name")
+
+            if not user_message or not index_name:
+                await websocket.send_text("Error: 'message' and 'index_name' are required.")
+                continue
+
+            reply = chat_with_gpt(user_message, index_name)
             await websocket.send_text(reply)
+
         except Exception as e:
             print(f"[WebSocket] Error: {e}")
+            await websocket.send_text(f"Internal server error: {str(e)}")
             break
 
 @app.get("/fetch-products")
@@ -87,3 +108,7 @@ async def fetch_products():
 
     # Return as API response
     return {"unique_collections": sorted_collections}
+
+@app.get("/fetch-products-from-crest-api")
+async def fetch_and_cache_products_from_crest_api():
+    return await fetch_and_cache_products_from_crest_api()
